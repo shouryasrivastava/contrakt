@@ -1,0 +1,37 @@
+{
+  "name": "contrakt",
+  "version": "0.1.0",
+  "description": "Auto-infer API contracts from vibe-coded apps, detect schema drift, generate MCP server configs",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "bin": {
+    "contrakt": "dist/bin/contrakt.js"
+  },
+  "files": [
+    "dist/",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc && node scripts/postbuild.mjs",
+    "dev": "tsx bin/contrakt.ts",
+    "prepublishOnly": "pnpm run build && pnpm test",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "commander": "^12.0.0",
+    "picocolors": "^1.1.0",
+    "ts-morph": "^23.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.5.0",
+    "vitest": "^2.0.0"
+  }
+}

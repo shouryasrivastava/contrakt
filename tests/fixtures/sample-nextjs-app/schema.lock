@@ -1,0 +1,232 @@
+{
+  "schemaSyncVersion": "0.1.0",
+  "generatedAt": "2026-05-21T06:50:48.577Z",
+  "projectRoot": "/Users/shouryasrivastava/Desktop/Vibed/schemasync/tests/fixtures/sample-nextjs-app",
+  "stack": "nextjs-app-router",
+  "endpoints": [
+    {
+      "path": "/api/health",
+      "method": "GET",
+      "sourceFile": "app/api/health/route.ts",
+      "responseSchema": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "examples": [
+              "ok"
+            ]
+          }
+        }
+      },
+      "statusCodes": [
+        200
+      ],
+      "description": "Health check endpoint."
+    },
+    {
+      "path": "/api/users/[id]",
+      "method": "GET",
+      "sourceFile": "app/api/users/[id]/route.ts",
+      "pathParams": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "responseSchema": {
+        "type": "object",
+        "properties": {
+          "user": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "email": {
+                "type": "string"
+              },
+              "createdAt": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "email",
+              "createdAt"
+            ]
+          }
+        }
+      },
+      "statusCodes": [
+        200
+      ],
+      "description": "Get a single user by ID."
+    },
+    {
+      "path": "/api/users/[id]",
+      "method": "DELETE",
+      "sourceFile": "app/api/users/[id]/route.ts",
+      "pathParams": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "responseSchema": {
+        "type": "object",
+        "properties": {
+          "deleted": {
+            "type": "boolean"
+          },
+          "id": {
+            "type": "string"
+          }
+        }
+      },
+      "statusCodes": [
+        200
+      ],
+      "description": "Delete a user by ID."
+    },
+    {
+      "path": "/api/users",
+      "method": "GET",
+      "sourceFile": "app/api/users/route.ts",
+      "querySchema": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "string"
+          },
+          "limit": {
+            "type": "string"
+          }
+        }
+      },
+      "responseSchema": {
+        "type": "object",
+        "properties": {
+          "users": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "email": {
+                  "type": "string"
+                },
+                "createdAt": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "email",
+                "createdAt"
+              ]
+            }
+          },
+          "page": {
+            "type": "string"
+          },
+          "limit": {
+            "type": "string"
+          }
+        }
+      },
+      "statusCodes": [
+        200
+      ],
+      "description": "List all users."
+    },
+    {
+      "path": "/api/users",
+      "method": "POST",
+      "sourceFile": "app/api/users/route.ts",
+      "requestSchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "email"
+        ]
+      },
+      "responseSchema": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "error": {
+                "type": "string",
+                "examples": [
+                  "name and email are required"
+                ]
+              }
+            }
+          },
+          {
+            "type": "object",
+            "properties": {
+              "user": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string"
+                  },
+                  "createdAt": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "name",
+                  "email",
+                  "createdAt"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "statusCodes": [
+        400,
+        201
+      ],
+      "description": "Create a new user."
+    }
+  ]
+}
