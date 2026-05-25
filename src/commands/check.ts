@@ -14,6 +14,7 @@ import {
   applyResults,
   printSampleResults,
 } from "./sample-runtime.js";
+import { explainBreaking } from "./explain.js";
 import type { Contract, DiffReport, JSONSchema } from "../inference/types.js";
 
 export interface CheckOptions {
@@ -118,6 +119,13 @@ export async function runCheck(options: CheckOptions): Promise<void> {
       }
     }
   }
+
+  // AI impact analysis — runs if ANTHROPIC_API_KEY is set and there are breaking changes
+  const allBreaking = [
+    ...staticReport.breaking,
+    ...(runtimeBreaking > 0 ? [] : []), // runtimeReport.breaking captured above
+  ];
+  await explainBreaking(cwd, staticReport.breaking);
 
   log.blank();
 

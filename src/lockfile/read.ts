@@ -17,12 +17,20 @@ export function readLockfile(cwd: string): Contract {
   return readJson<Contract>(path);
 }
 
-export function readConfig(cwd: string): { baseUrl: string } | null {
-  const path = join(cwd, CONFIG_NAME);
-  if (!exists(path)) return null;
-  return readJson<{ baseUrl: string }>(path);
+export interface ContraktConfig {
+  baseUrl?: string;
+  stack?: string;
+  name?: string;
+  registryUrl?: string;
+  registryId?: string;
 }
 
-export function writeConfig(cwd: string, config: { baseUrl: string; stack: string }): void {
+export function readConfig(cwd: string): ContraktConfig | null {
+  const path = join(cwd, CONFIG_NAME);
+  if (!exists(path)) return null;
+  return readJson<ContraktConfig>(path);
+}
+
+export function writeConfig(cwd: string, config: ContraktConfig): void {
   writeJson(join(cwd, CONFIG_NAME), config);
 }

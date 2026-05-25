@@ -7,6 +7,7 @@ import { runCheck, runWatch } from "../src/commands/check.js";
 import { runMcp } from "../src/commands/mcp.js";
 import { runDiff } from "../src/commands/diff.js";
 import { runSample } from "../src/commands/sample.js";
+import { runPublish } from "../src/commands/publish.js";
 
 const program = new Command();
 
@@ -77,6 +78,18 @@ program
   .action(async (opts) => {
     if (opts.verbose) setVerbose(true);
     await runSample({ cwd: opts.cwd, baseUrl: opts.baseUrl, dryRun: opts.dryRun });
+  });
+
+program
+  .command("publish")
+  .description("Publish contrakt.lock to the public registry so AI agents can discover your API")
+  .option("--cwd <path>", "project directory", process.cwd())
+  .option("--name <name>", "project name on the registry (default: directory name)")
+  .option("--registry <url>", "registry URL (default: https://registry.contrakt.dev)")
+  .option("--verbose", "enable debug logging")
+  .action(async (opts) => {
+    if (opts.verbose) setVerbose(true);
+    await runPublish({ cwd: opts.cwd, name: opts.name, registry: opts.registry });
   });
 
 program.parseAsync(process.argv).catch((err) => {
