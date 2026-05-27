@@ -27,6 +27,9 @@ contrakt check
 
 # 3. Intentionally changed the API? Accept it as the new baseline
 contrakt check --update
+
+# 4. Publish your contract to the public registry
+contrakt publish --name my-app
 ```
 
 That's the whole workflow. Commit `contrakt.lock` to your repo. Run `contrakt check` in CI.
@@ -48,9 +51,9 @@ Options:
 
 **Outputs:**
 - `contrakt.lock` — versioned contract file (commit this)
-- `contrakt.config.json` — deployment config (gitignore if you vary by environment)
-- `mcp.json` — Claude Desktop / MCP client config snippet
-- `contrakt-mcp-server.ts` — runnable MCP server stub
+- `contrakt.config.json` — local config (baseUrl, registry info)
+- `.contrakt/mcp.json` — Claude Desktop / MCP client config snippet
+- `.contrakt/contrakt-mcp-server.ts` — runnable MCP server stub
 
 ### `contrakt check`
 
@@ -93,6 +96,35 @@ Breaking changes (1):
 Run 'contrakt check --update' to accept these changes as your new baseline.
 ```
 
+If `ANTHROPIC_API_KEY` is set in your environment, Contrakt will also run an AI impact analysis after detecting breaking changes — it scans your codebase for consumers of the changed fields and explains what will break and how to fix it.
+
+### `contrakt publish`
+
+Publish your `contrakt.lock` to the [public registry](https://contrakt-registry.vercel.app) so AI agents and other developers can discover your API.
+
+```
+Options:
+  --cwd <path>        Project directory
+  --name <name>       Project name on the registry (default: directory name)
+  --token <token>     API token (or set CONTRAKT_TOKEN env var)
+  --registry <url>    Registry URL override
+  --verbose           Debug logging
+```
+
+**How to get a token:**
+1. Go to [contrakt-registry.vercel.app](https://contrakt-registry.vercel.app)
+2. Sign in with GitHub
+3. Go to **Dashboard** → **Create Token**
+4. Set `export CONTRAKT_TOKEN=<token>` in your shell (or pass `--token`)
+
+```bash
+export CONTRAKT_TOKEN=your-token
+contrakt publish --name my-app
+# ✓  Published → https://contrakt-registry.vercel.app/c/username/my-app
+```
+
+Run `contrakt publish` again after `contrakt check --update` to keep the registry in sync.
+
 ### `contrakt diff <ref>`
 
 Diff the current codebase against `contrakt.lock` at any git ref.
@@ -121,7 +153,7 @@ Generates (or regenerates) the MCP server artifacts from `contrakt.lock`.
 Options:
   --cwd <path>        Project directory
   --base-url <url>    Override base URL for this generation only
-  --output <path>     Directory to write artifacts (default: project root)
+  --output <path>     Directory to write artifacts (default: .contrakt/)
   --verbose           Debug logging
 ```
 
@@ -135,13 +167,24 @@ Options:
 
 `contrakt check` exits 1 on breaking changes. It only does static analysis in CI (no running server), which is fine — `contrakt.lock` is the agreed baseline, committed by a developer after running `contrakt check --update` locally.
 
+## AI impact analysis
+
+Set `ANTHROPIC_API_KEY` to get automatic impact analysis after breaking changes are detected:
+
+```bash
+export ANTHROPIC_API_KEY=sk-ant-...
+contrakt check
+```
+
+Contrakt will grep your codebase for consumers of the changed fields and call Claude to explain what will break and suggest how to fix it — inline, right after the diff output.
+
 ## Base URL resolution
 
-Three layers, highest priority first:
+Priority order (highest first):
 
-1. `CONTRAKT_BASE_URL` env var (runtime override in the generated MCP server)
-2. `--base-url` flag (overrides config for this run only)
-3. `contrakt.config.json` → `baseUrl` (written by `init`)
+1. `CONTRAKT_BASE_URL` env var
+2. `--base-url` flag
+3. `contrakt.config.json` → `baseUrl`
 4. Default: `http://localhost:3000`
 
 ## Files
@@ -149,9 +192,9 @@ Three layers, highest priority first:
 | File | Commit? | Purpose |
 |---|---|---|
 | `contrakt.lock` | ✅ Yes | Contract definition — diffed on every `check` |
-| `contrakt.config.json` | Optional | Deployment config (baseUrl) |
-| `mcp.json` | Optional | Claude Desktop config snippet |
-| `contrakt-mcp-server.ts` | Optional | Runnable MCP server — regenerate with `mcp` |
+| `contrakt.config.json` | Optional | Local config (baseUrl, registry URL) — gitignore if env-specific |
+| `.contrakt/mcp.json` | Optional | Claude Desktop config snippet |
+| `.contrakt/contrakt-mcp-server.ts` | Optional | Runnable MCP server — regenerate with `contrakt mcp` |
 
 ## Using the MCP server
 
@@ -160,15 +203,15 @@ Three layers, highest priority first:
 pnpm dev
 
 # In another terminal, start the MCP server
-tsx contrakt-mcp-server.ts
+tsx .contrakt/contrakt-mcp-server.ts
 
 # Override base URL at runtime
-CONTRAKT_BASE_URL=https://staging.myapp.com tsx contrakt-mcp-server.ts
+CONTRAKT_BASE_URL=https://staging.myapp.com tsx .contrakt/contrakt-mcp-server.ts
 ```
 
 Add to Claude Desktop's `claude_desktop_config.json`:
 ```json
-// contents of mcp.json
+// paste the contents of .contrakt/mcp.json here
 ```
 
 ## What gets inferred
@@ -193,16 +236,24 @@ Anything that can't be confidently inferred is marked `{ "type": "unknown" }` ra
 - 🔜 Express
 - 🔜 FastAPI
 
+## Registry
+
+Contracts published with `contrakt publish` are browsable at **[contrakt-registry.vercel.app](https://contrakt-registry.vercel.app)**.
+
+The registry source is open at [github.com/shouryasrivastava/contrakt-registry](https://github.com/shouryasrivastava/contrakt-registry).
+
 ## Local development
 
 ```bash
-git clone https://github.com/your-org/contrakt
+git clone https://github.com/shouryasrivastava/contrakt
 cd contrakt
 pnpm install
 pnpm build            # compile to dist/
 pnpm link --global    # make contrakt available globally
-pnpm test             # run integration tests
+pnpm test             # run integration tests (26 tests)
 ```
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for how to add framework support and submit PRs.
 
 ## License
 
