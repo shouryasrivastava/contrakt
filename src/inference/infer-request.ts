@@ -196,15 +196,28 @@ export function typeToJsonSchema(type: Type, context: string): JSONSchema {
     const properties: Record<string, JSONSchema> = {};
     const required: string[] = [];
 
-    for (const prop of type.getProperties()) {
-      const propName = prop.getName();
-      const propType = prop.getTypeAtLocation(
-        prop.getDeclarations()[0] ?? prop.getValueDeclaration()!,
-      );
-      properties[propName] = typeToJsonSchema(propType, `${context}.${propName}`);
+    let props: ReturnType<Type["getProperties"]>;
+    try {
+      props = type.getProperties();
+    } catch {
+      return { type: "unknown", "x-contrakt-note": `Could not enumerate properties at ${context}` };
+    }
 
-      const isOptional = prop.isOptional();
-      if (!isOptional) required.push(propName);
+    for (const prop of props) {
+      const propName = prop.getName();
+      try {
+        const declaration = prop.getDeclarations()[0] ?? prop.getValueDeclaration();
+        if (!declaration) {
+          properties[propName] = { type: "unknown", "x-contrakt-note": "no declaration found" };
+          continue;
+        }
+        const propType = prop.getTypeAtLocation(declaration);
+        properties[propName] = typeToJsonSchema(propType, `${context}.${propName}`);
+        const isOptional = prop.isOptional();
+        if (!isOptional) required.push(propName);
+      } catch {
+        properties[propName] = { type: "unknown", "x-contrakt-note": `type resolution failed for ${propName}` };
+      }
     }
 
     const schema: JSONSchema = { type: "object", properties };

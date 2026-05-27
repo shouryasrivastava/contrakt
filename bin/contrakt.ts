@@ -85,11 +85,12 @@ program
   .description("Publish contrakt.lock to the public registry so AI agents can discover your API")
   .option("--cwd <path>", "project directory", process.cwd())
   .option("--name <name>", "project name on the registry (default: directory name)")
-  .option("--registry <url>", "registry URL (default: https://registry.contrakt.dev)")
+  .option("--token <token>", "API token from contrakt-registry.vercel.app/dashboard (or set CONTRAKT_TOKEN env var)")
+  .option("--registry <url>", "registry URL override")
   .option("--verbose", "enable debug logging")
   .action(async (opts) => {
     if (opts.verbose) setVerbose(true);
-    await runPublish({ cwd: opts.cwd, name: opts.name, registry: opts.registry });
+    await runPublish({ cwd: opts.cwd, name: opts.name, token: opts.token, registry: opts.registry });
   });
 
 program.parseAsync(process.argv).catch((err) => {

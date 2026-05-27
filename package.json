@@ -1,6 +1,6 @@
 {
   "name": "contrakt",
-  "version": "0.1.0",
+  "version": "0.1.3",
   "description": "Auto-infer API contracts from vibe-coded apps, detect schema drift, generate MCP server configs",
   "license": "MIT",
   "type": "module",

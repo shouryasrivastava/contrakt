@@ -31,14 +31,14 @@ describe("contrakt mcp", () => {
   it("generates mcp.json and contrakt-mcp-server.ts", async () => {
     await runMcp({ cwd: tmpDir });
 
-    expect(existsSync(join(tmpDir, "mcp.json"))).toBe(true);
-    expect(existsSync(join(tmpDir, "contrakt-mcp-server.ts"))).toBe(true);
+    expect(existsSync(join(tmpDir, ".contrakt", "mcp.json"))).toBe(true);
+    expect(existsSync(join(tmpDir, ".contrakt", "contrakt-mcp-server.ts"))).toBe(true);
   });
 
   it("mcp.json has mcpServers key", async () => {
     await runMcp({ cwd: tmpDir });
 
-    const config = JSON.parse(readFileSync(join(tmpDir, "mcp.json"), "utf8"));
+    const config = JSON.parse(readFileSync(join(tmpDir, ".contrakt", "mcp.json"), "utf8"));
     expect(config).toHaveProperty("mcpServers");
     const servers = Object.values(config.mcpServers) as Array<Record<string, unknown>>;
     expect(servers).toHaveLength(1);
@@ -48,7 +48,7 @@ describe("contrakt mcp", () => {
   it("generated server has one tool per endpoint method", async () => {
     await runMcp({ cwd: tmpDir });
 
-    const serverSrc = readFileSync(join(tmpDir, "contrakt-mcp-server.ts"), "utf8");
+    const serverSrc = readFileSync(join(tmpDir, ".contrakt", "contrakt-mcp-server.ts"), "utf8");
 
     // 5 endpoints: GET /api/health, GET+POST /api/users, GET+DELETE /api/users/[id]
     const toolMatches = [...serverSrc.matchAll(/"name":\s*"(get_|post_|put_|patch_|delete_)[^"]+"/g)];
@@ -58,10 +58,10 @@ describe("contrakt mcp", () => {
   it("respects --base-url flag override", async () => {
     await runMcp({ cwd: tmpDir, baseUrl: "https://staging.example.com" });
 
-    const serverSrc = readFileSync(join(tmpDir, "contrakt-mcp-server.ts"), "utf8");
+    const serverSrc = readFileSync(join(tmpDir, ".contrakt", "contrakt-mcp-server.ts"), "utf8");
     expect(serverSrc).toContain("https://staging.example.com");
 
-    const mcpJson = JSON.parse(readFileSync(join(tmpDir, "mcp.json"), "utf8"));
+    const mcpJson = JSON.parse(readFileSync(join(tmpDir, ".contrakt", "mcp.json"), "utf8"));
     const server = Object.values(mcpJson.mcpServers)[0] as Record<string, unknown>;
     expect((server["env"] as Record<string, string>)["CONTRAKT_BASE_URL"]).toBe(
       "https://staging.example.com",
@@ -71,7 +71,7 @@ describe("contrakt mcp", () => {
   it("generated server reads CONTRAKT_BASE_URL env var", async () => {
     await runMcp({ cwd: tmpDir, baseUrl: "http://localhost:3000" });
 
-    const serverSrc = readFileSync(join(tmpDir, "contrakt-mcp-server.ts"), "utf8");
+    const serverSrc = readFileSync(join(tmpDir, ".contrakt", "contrakt-mcp-server.ts"), "utf8");
     expect(serverSrc).toContain("process.env.CONTRAKT_BASE_URL");
   });
 });

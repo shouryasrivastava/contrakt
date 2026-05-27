@@ -67,7 +67,13 @@ function collectResponseShapes(node: Node): ResponseShape[] {
     const payloadArg = args[0];
     const statusCode = extractStatusCode(args[1]) ?? 200;
 
-    const schema = inferPayloadSchema(payloadArg, call.getSourceFile().getFilePath());
+    let schema: JSONSchema;
+    try {
+      schema = inferPayloadSchema(payloadArg, call.getSourceFile().getFilePath());
+    } catch (err) {
+      log.debug(`Response schema inference failed: ${err instanceof Error ? err.message : String(err)}`);
+      schema = { type: "unknown", "x-contrakt-note": "response type resolution failed (complex/opaque type)" };
+    }
     shapes.push({ statusCode, schema });
     log.debug(`Found response shape at status ${statusCode} in ${call.getSourceFile().getBaseName()}`);
   }
@@ -120,7 +126,11 @@ function inferObjectLiteralSchema(obj: ObjectLiteralExpression, filePath: string
     // Shorthand property: `{ user }` — resolve through the referenced variable's type
     if (Node.isShorthandPropertyAssignment(prop)) {
       const name = prop.getName();
-      properties[name] = typeToJsonSchema(prop.getType(), `${filePath}.${name}`);
+      try {
+        properties[name] = typeToJsonSchema(prop.getType(), `${filePath}.${name}`);
+      } catch {
+        properties[name] = { type: "unknown", "x-contrakt-note": `type resolution failed for shorthand prop "${name}"` };
+      }
       continue;
     }
 
@@ -145,8 +155,12 @@ function inferObjectLiteralSchema(obj: ObjectLiteralExpression, filePath: string
     } else if (Node.isArrayLiteralExpression(init)) {
       properties[name] = { type: "array", items: {} };
     } else {
-      const type = init.getType();
-      properties[name] = typeToJsonSchema(type, `${filePath}:${name}`);
+      try {
+        const type = init.getType();
+        properties[name] = typeToJsonSchema(type, `${filePath}:${name}`);
+      } catch {
+        properties[name] = { type: "unknown", "x-contrakt-note": `type resolution failed for "${name}"` };
+      }
     }
   }
 

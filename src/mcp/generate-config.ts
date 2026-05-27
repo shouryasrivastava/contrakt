@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { writeFileSync } from "node:fs";
+import { writeFileSync, mkdirSync } from "node:fs";
 import type { Contract, Endpoint, JSONSchema } from "../inference/types.js";
 
 export interface McpGenerateOptions {
@@ -17,9 +17,13 @@ export function generateMcpArtifacts(
   contract: Contract,
   options: McpGenerateOptions,
 ): McpArtifacts {
-  const outDir = options.outputDir ?? options.cwd;
+  // Output to .contrakt/ by default so the generated .ts file doesn't
+  // pollute the host project's TypeScript compilation scope.
+  const outDir = options.outputDir ?? join(options.cwd, ".contrakt");
   const configPath = join(outDir, "mcp.json");
   const serverPath = join(outDir, "contrakt-mcp-server.ts");
+
+  mkdirSync(outDir, { recursive: true });
 
   const mcpConfig = buildMcpConfig(contract, serverPath, options.baseUrl);
   writeFileSync(configPath, JSON.stringify(mcpConfig, null, 2) + "\n", "utf8");

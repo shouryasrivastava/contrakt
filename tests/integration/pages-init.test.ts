@@ -121,7 +121,7 @@ describe("contrakt init (Pages Router)", () => {
   it("generates valid MCP config with 5 tools", async () => {
     await runInit({ cwd: tmpDir, baseUrl: "http://localhost:3000", force: true, mcp: true });
 
-    const serverSrc = readFileSync(join(tmpDir, "contrakt-mcp-server.ts"), "utf8");
+    const serverSrc = readFileSync(join(tmpDir, ".contrakt", "contrakt-mcp-server.ts"), "utf8");
     const toolMatches = [...serverSrc.matchAll(/"name":\s*"(get_|post_|delete_)[^"]+"/g)];
     expect(toolMatches).toHaveLength(5);
   });

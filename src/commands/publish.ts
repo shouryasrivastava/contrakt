@@ -1,15 +1,15 @@
 import { resolve } from "node:path";
 import { log } from "../util/logger.js";
-import { readLockfile } from "../lockfile/read.js";
-import { readConfig, writeConfig } from "../lockfile/read.js";
+import { readLockfile, readConfig, writeConfig } from "../lockfile/read.js";
 
 export interface PublishOptions {
   cwd: string;
   name?: string;
+  token?: string;
   registry?: string;
 }
 
-const DEFAULT_REGISTRY = "https://registry.contrakt.dev";
+const DEFAULT_REGISTRY = "https://contrakt-registry.vercel.app";
 
 export async function runPublish(options: PublishOptions): Promise<void> {
   const cwd = resolve(options.cwd);
@@ -22,6 +22,24 @@ export async function runPublish(options: PublishOptions): Promise<void> {
   const contract = readLockfile(cwd);
   const config = readConfig(cwd);
 
+  // Token resolution: --token flag > CONTRAKT_TOKEN env var > contrakt.config.json
+  const token =
+    options.token ??
+    process.env.CONTRAKT_TOKEN ??
+    config?.token;
+
+  if (!token) {
+    log.error("No API token found.");
+    log.blank();
+    log.dim("Get a token from your dashboard:");
+    log.dim(`  ${registry}/dashboard`);
+    log.blank();
+    log.dim("Then either:");
+    log.dim("  export CONTRAKT_TOKEN=<token>  (recommended)");
+    log.dim("  contrakt publish --token <token>");
+    process.exit(1);
+  }
+
   const name =
     options.name ??
     config?.name ??
@@ -33,7 +51,10 @@ export async function runPublish(options: PublishOptions): Promise<void> {
   try {
     const res = await fetch(`${registry}/api/contracts`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
       body: JSON.stringify({ name, contract }),
       signal: AbortSignal.timeout(10000),
     });
@@ -45,13 +66,13 @@ export async function runPublish(options: PublishOptions): Promise<void> {
 
     const { url, id } = (await res.json()) as { url: string; id: string };
 
-    // Persist the registry URL into contrakt.config.json
+    // Persist registry info into contrakt.config.json (never writes the token to disk)
     writeConfig(cwd, { ...config, registryUrl: url, registryId: id });
 
     log.blank();
     log.success(`Published → ${url}`);
     log.dim("AI agents and developers can now discover your API at that URL.");
-    log.dim("Stored in contrakt.config.json — run 'contrakt publish' again to update.");
+    log.dim("Run 'contrakt publish' again to push updates.");
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     const isNetworkError =
@@ -62,11 +83,11 @@ export async function runPublish(options: PublishOptions): Promise<void> {
 
     if (isNetworkError) {
       log.blank();
-      log.warn("The public registry is not yet live.");
-      log.dim("Star the repo and watch for the registry launch:");
-      log.dim("https://github.com/shouryasrivastava/contrakt");
+      log.warn("Could not reach the registry.");
+      log.dim(`Is ${registry} reachable?`);
     } else {
       log.error(`Publish failed: ${msg}`);
+      process.exit(1);
     }
   }
 }

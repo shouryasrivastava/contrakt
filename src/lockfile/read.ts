@@ -23,6 +23,7 @@ export interface ContraktConfig {
   name?: string;
   registryUrl?: string;
   registryId?: string;
+  token?: string;
 }
 
 export function readConfig(cwd: string): ContraktConfig | null {
