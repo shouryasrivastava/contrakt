@@ -8,6 +8,7 @@ import { runMcp } from "../src/commands/mcp.js";
 import { runDiff } from "../src/commands/diff.js";
 import { runSample } from "../src/commands/sample.js";
 import { runPublish } from "../src/commands/publish.js";
+import { runRegistryMcp } from "../src/commands/registry-mcp.js";
 
 const program = new Command();
 
@@ -91,6 +92,17 @@ program
   .action(async (opts) => {
     if (opts.verbose) setVerbose(true);
     await runPublish({ cwd: opts.cwd, name: opts.name, token: opts.token, registry: opts.registry });
+  });
+
+program
+  .command("registry-mcp")
+  .description(
+    "Start an MCP server that exposes the Contrakt registry as tools — lets AI agents search, discover, and fetch published API contracts"
+  )
+  .option("--registry <url>", "Registry URL override (default: https://contrakt-registry.vercel.app)")
+  .action(async (opts) => {
+    if (opts.registry) process.env.CONTRAKT_REGISTRY_URL = opts.registry;
+    await runRegistryMcp();
   });
 
 program.parseAsync(process.argv).catch((err) => {
